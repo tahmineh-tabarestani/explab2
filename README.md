@@ -26,7 +26,7 @@ The whole software structure is divided into 5 important parts:
 3.Helper scripts
 4.URDF
 5.Packages
-##/1. Python nodes/
+## 1. Python nodes
 Finite State Machine (FSM):
 
 The FSM serves as the central node in the overall architecture. It utilizes the build_ontology_map.py class to handle functionalities such as adding, manipulating, and querying information. Additionally, it imports three crucial services from set_object_state.py to manage the state of the battery, base movement, and arm movement. To obtain information from the robot's camera, the FSM subscribes to the marker_publisher.cpp node, receiving the /image_id detected by the camera. This id is then communicated to the marker_server.cpp node to retrieve the corresponding information. When the robot intends to move, it publishes a Move Base Action to the move_base package, instructing the robot's base movement. Finally, the FSM utilizes a service response to obtain the pose, base movement state, and arm movement state from the robot_states.py node.
