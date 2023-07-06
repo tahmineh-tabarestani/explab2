@@ -72,7 +72,7 @@ The Assignment Moveit package provides a setup assistant that assists in configu
 
 aRMOR:
 aRMOR is a powerful management system for single and multi-ontology architectures under ROS. It allows for the loading, querying, and modification of ontology maps. In the context of this assignment, aRMOR is used to add and manipulate rooms and doors in the ontological_map.owl file. It provides the query results as feedback to the FSM node. The build_ontology_map.py helper script works in parallel with aRMOR to load the ontology map and synchronize with the armor_client.py whenever the ontology is updated.
-##Temporal diagram
+## Temporal diagram
 ![temporal drawio assignment2 AKHARI](https://github.com/tahmineh-tabarestani/explab2/assets/80887743/a1f62a82-3a63-47cc-a09b-9fbee2956b48)
 
 In the initial phase, a launch file is used to start all the nodes and packages, excluding finite_state_machine.py. The finite_state_machine.py node automatically begins functioning after a delay of 20 seconds. This delay is necessary as it allows time for the simulation to incorporate the robot model into the environment and enable the execution of functions defined in the FSM node.
@@ -83,7 +83,7 @@ Upon completion of the SETUP_MAP step, the GO_IN_ROOM state is initiated. The FS
 
 It's important to note that the FSM node encompasses five states, but only two of them are demonstrated here. At the beginning of each state, changes occur in the /arm_movement_state and /base_movement_state, while the /battery_level_state starts consuming after the first state is initiated.
 
-##Usage:
+## Usage:
 to use the assignment, follow the steps below:
 
 1.Create a repository named "assignment_ws" by executing the following commands:
