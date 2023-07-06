@@ -53,6 +53,7 @@ The Build Ontology Map script utilizes a service response from the robot_state.p
 Set Object State:
 
 The Set Object State script defines three significant services: battery_state, base_movement_state, and arm_movement_state. It sends service requests to the robot_state.py node to set the base movement state and battery level state. It also sends a service request to the my_moveit.cpp node to set the arm movement state. These services are essential for managing and updating the states of the battery, base movement, and arm movement in the system.
+
 ##/4. URDF/
 The Robot Assignment file is generated using the MoveIt Setup Assistant. It contains a robot model and various topics that are useful for controlling the robot's base and arm movements. The robot URDF subscribes to the move_base topic to receive velocity commands via the /cmd_vel topic. It also publishes odometry information via the /odom topic to the robot_state.py node, which provides the current position of the robot in the ontology map. Additionally, the URDF publishes the /robot_camera/image_box topic to the marker_publisher.cpp node to transmit images detected by the robot's camera. It also publishes base information using the /scan topic and the TF (Transform) tree via the /tf topic, which is used by slam_gmapping to update the robot's position in the map.
 ##/5. Packages/
