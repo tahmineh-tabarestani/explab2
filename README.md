@@ -34,7 +34,7 @@ The FSM serves as the central node in the overall architecture. It utilizes the 
 Robot States:
 
 The Robot States node subscribes to the /odom topic from the robot's URDF to gather odometry information. It acts as the hub for various services, including base_movement_state and battery_level_state. Additionally, the Get_pose service is executed within this node, facilitating communication between the FSM node, helper scripts, and other components via the <response & request> mechanism.
-##2. Cpp nodes/
+## 2. Cpp nodes/
 Marker Server:
 
 The Marker Server node is responsible for defining the properties of each room, such as the room ID and its details (position, connections, doors, last visit time). It establishes communication with the FSM node through a service (Request/Response) to transmit room information.
