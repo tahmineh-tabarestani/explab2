@@ -16,7 +16,7 @@ The objective of this assignment is to design a software architecture for the ex
 5. SMACH Viewer: SMACH Viewer provided visual representation and monitoring of the robot's state machine during operation.
 
 By leveraging these tools, a comprehensive software architecture was developed to enable efficient robot movements, incorporating capabilities such as environment detection, motion planning, mapping, and state monitoring.
-##Software architecture
+## Software architecture
 ![assignment2uml asli2](https://github.com/tahmineh-tabarestani/explab2/assets/80887743/f548748c-5f95-442c-b2c9-048760143ce8)
 UML graph
 The whole software structure is divided into 5 important parts:
