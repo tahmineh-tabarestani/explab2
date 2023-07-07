@@ -111,7 +111,7 @@ Note: Please be aware that there is a 20-second delay before the assignment star
 
 6.Optionally, if you want to change the battery level manually, use the following command:
 
-$ rosservice call /state/set_battery_level "battery_level: <value>"
+ $ rosservice call /state/set_battery_level "battery_level: <value>"
 Replace <value> with the desired battery level.
 
 WARNING:
