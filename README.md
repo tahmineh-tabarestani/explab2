@@ -102,11 +102,15 @@ SMACH viewer
 Navigate to the workspace and build the packages by running:
 $ cd ..
 $ catkin_make
+
 5.Launch the assignment using the following command:
+
 $ roslaunch assignment2 assignment.launch 2> >(grep -v TF_REPEATED_DATA buffer_core)
+
 Note: Please be aware that there is a 20-second delay before the assignment starts working. This delay allows time for the robot to be added to the environment and for the MoveIt package to initialize.
 
 6.Optionally, if you want to change the battery level manually, use the following command:
+
 $ rosservice call /state/set_battery_level "battery_level: <value>"
 Replace <value> with the desired battery level.
 
