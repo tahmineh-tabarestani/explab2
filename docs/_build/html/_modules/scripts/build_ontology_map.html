@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scripts.build_ontology_map &mdash; Topological_map_robot_control 2.0 1.0 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Topological_map_robot_control 2.0
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../software_architecture.html">Software architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../map.html">Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../src.html">Src</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../armor.html">aRMOR</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Topological_map_robot_control 2.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">scripts.build_ontology_map</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for scripts.build_ontology_map</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: build_ontology_map.py</span>
+<span class="sd">    :platform: Unix</span>
+<span class="sd">    :synopsis: The Build Ontology Map script in assignment2 package</span>
+
+<span class="sd">.. moduleauthor:: Mohammad Reza Haji Hosseini &lt;mrhhosseini75@gmail.com&gt;</span>
+
+<span class="sd">Definition:</span>
+
+<span class="sd">    Defines the Ontologycal map using the ``armor_client.py`` helper script methods and the</span>
+<span class="sd">    ontology file ``ontologycal_map.owl``.</span>
+
+<span class="sd">Services:</span>
+<span class="sd">    /state/get_battery_level  ---&gt; uses GetBatteryLevel.srv</span>
+<span class="sd">    </span>
+<span class="sd">    /state/get_pose ---&gt; uses GetPose.srv</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">rospy</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">realpath</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/root/assignment_ws/src/assignment2&#39;</span><span class="p">)</span>
+<span class="c1">#Import constant name defined to structure the architecture.</span>
+<span class="kn">from</span> <span class="nn">utilities</span> <span class="kn">import</span> <span class="n">architecture_name_mapper</span> <span class="k">as</span> <span class="n">anm</span>
+<span class="kn">from</span> <span class="nn">assignment2.srv</span> <span class="kn">import</span> <span class="n">GetPose</span><span class="p">,</span> <span class="n">GetBatteryLevel</span>
+<span class="kn">from</span> <span class="nn">assignment2.msg</span> <span class="kn">import</span> <span class="n">Point</span>
+<span class="c1">#Helper script from armor package</span>
+<span class="kn">from</span> <span class="nn">utilities.armor_client</span> <span class="kn">import</span> <span class="n">ArmorClient</span>
+<span class="c1">#Colorful msg in output</span>
+<span class="kn">from</span> <span class="nn">colorama</span> <span class="kn">import</span> <span class="n">Fore</span>
+
+<div class="viewcode-block" id="Build_Ontology_Map"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map">[docs]</a><span class="k">class</span> <span class="nc">Build_Ontology_Map</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class for building the ontologycal map. Each time this class is called by ``finite_state_machine.py``</span>
+<span class="sd">        ontology map loaded by using helper script ``armor_client.py`` in **armor package** and it make me able </span>
+<span class="sd">        to use different method available inside *armor pkg*. In case, if each method from ``armor`` it&#39;s used,</span>
+<span class="sd">        it&#39;s necessary to  syncs the reasoner (PELLET).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_tag</span><span class="p">,</span> <span class="n">init_time</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span> <span class="o">=</span> <span class="n">log_tag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_time</span> <span class="o">=</span> <span class="n">init_time</span>
+        <span class="c1">#Build topological map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;/../utilities/ontology/&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">ArmorClient</span><span class="p">(</span><span class="s2">&quot;ontology&quot;</span><span class="p">,</span> <span class="s2">&quot;ontology_reference&quot;</span><span class="p">)</span>
+        <span class="c1">#Load resoner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">load_ref_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;ontological_map.owl&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s2">&quot;PELLET&quot;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">set_log_to_terminal</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_robot</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Build_Ontology_Map.add_room"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.add_room">[docs]</a>    <span class="k">def</span> <span class="nf">add_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add indiviuals (ROOM) to class in ontologycal map --&gt; using helper script ``armor_client.py``</span>
+<span class="sd">        in **armor package** and syncs the reasoner (PELLET)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room(string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="n">room</span><span class="p">,</span> <span class="s2">&quot;ROOM&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.add_door"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.add_door">[docs]</a>    <span class="k">def</span> <span class="nf">add_door</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">door</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add indiviuals (DOOR) to class in ontologycal map --&gt; using helper script ``armor_client.py``</span>
+<span class="sd">        in **armor package** and syncs the reasoner (PELLET)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            door(string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="n">door</span><span class="p">,</span> <span class="s2">&quot;DOOR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>  </div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.disjoint_individuals"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.disjoint_individuals">[docs]</a>    <span class="k">def</span> <span class="nf">disjoint_individuals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Disjoint each indiviual (ROOM, DOOR) in different class in ontologycal map --&gt; using helper script ``armor_client.py``</span>
+<span class="sd">        in **armor package** and syncs the reasoner (PELLET)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">disj_inds_of_class</span><span class="p">(</span><span class="s2">&quot;ROOM&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">disj_inds_of_class</span><span class="p">(</span><span class="s2">&quot;DOOR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.assign_doors_to_room"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.assign_doors_to_room">[docs]</a>    <span class="k">def</span> <span class="nf">assign_doors_to_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room</span><span class="p">,</span> <span class="n">doors</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign at least one DOOR to each ROOM --&gt; using helper script ``armor_client.py``</span>
+<span class="sd">        in **armor package** and syncs the reasoner (PELLET)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room(string)</span>
+<span class="sd">            doors[](string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">doors</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_objectprop_to_ind</span><span class="p">(</span><span class="s2">&quot;hasDoor&quot;</span><span class="p">,</span> <span class="n">room</span><span class="p">,</span> <span class="n">doors</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.add_last_visit_time"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.add_last_visit_time">[docs]</a>    <span class="k">def</span> <span class="nf">add_last_visit_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room</span><span class="p">,</span> <span class="n">visit_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add time visited method for each ROOM in order to make URGENT list of the ROOM</span>
+<span class="sd">        which are not visited for a long time --&gt; using helper script ``armor_client.py``</span>
+<span class="sd">        in **armor package** and syncs the reasoner (PELLET)</span>
+
+<span class="sd">        Args: </span>
+<span class="sd">            room(string)</span>
+<span class="sd">            visit_time(string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="n">room</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="n">visit_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.add_robot"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.add_robot">[docs]</a>    <span class="k">def</span> <span class="nf">add_robot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to add robot in extra palce in ROOM E (where there are marker) for first time and </span>
+<span class="sd">        and sets its initial time instance and battery level and defines its urgency and battery threshold</span>
+<span class="sd">        --&gt; using helper script ``armor_client.py`` in **armor package** and syncs the reasoner (PELLET)</span>
+<span class="sd">        &quot;&quot;&quot;</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;ROBOT&quot;</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_time</span><span class="o">.</span><span class="n">secs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_objectprop_to_ind</span><span class="p">(</span><span class="s2">&quot;isIn&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_location</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_location</span><span class="p">(),</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_time</span><span class="o">.</span><span class="n">secs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;batteryLvl&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_battery_level</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;urgencyThreshold&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_dataprop_to_ind</span><span class="p">(</span><span class="s2">&quot;batteryThreshold&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="s2">&quot;300&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>       </div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.cut_dataprop"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.cut_dataprop">[docs]</a>    <span class="k">def</span> <span class="nf">cut_dataprop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_prop</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Very simple function that cut the data prop from a string received  from armor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_prop(string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">data_prop</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;^&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="n">data_prop</span> <span class="o">=</span> <span class="n">data_prop</span><span class="p">[(</span><span class="n">start</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">:</span> <span class="n">end</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">data_prop</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.cut_dataprop_list"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.cut_dataprop_list">[docs]</a>    <span class="k">def</span> <span class="nf">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_prop_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Very simple function that cut the data prop from a list of strings received  from armor.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            data_prop_list(string[])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_prop_list</span><span class="p">)):</span>
+            <span class="n">data_prop_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop</span><span class="p">(</span><span class="n">data_prop_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">data_prop_list</span></div>
+        
+<div class="viewcode-block" id="Build_Ontology_Map.get_battery_level"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.get_battery_level">[docs]</a>    <span class="k">def</span> <span class="nf">get_battery_level</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current battery level of the robot from ``robot_states.py`` node, using </span>
+<span class="sd">        **/state/get_battery_level** service.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            battery_level(int)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Eventually, wait for the server to be initialised.</span>
+        <span class="n">rospy</span><span class="o">.</span><span class="n">wait_for_service</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">SERVER_GET_BATTERY_LEVEL</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Call the service and get a response with the current robot battery level.</span>
+            <span class="n">service</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">ServiceProxy</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">SERVER_GET_BATTERY_LEVEL</span><span class="p">,</span> <span class="n">GetBatteryLevel</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">service</span><span class="p">()</span>
+            <span class="n">battery_level</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">battery_level</span>
+
+            <span class="k">return</span> <span class="n">battery_level</span>
+        <span class="c1">#In case service calling is fail</span>
+        <span class="k">except</span> <span class="n">rospy</span><span class="o">.</span><span class="n">ServiceException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log_msg</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;Server cannot get current robot battery level: {e}&#39;</span>
+            <span class="n">rospy</span><span class="o">.</span><span class="n">logerr</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.get_pose"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.get_pose">[docs]</a>    <span class="k">def</span> <span class="nf">get_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get current position of the robot from ``robot_states.py`` node, using </span>
+<span class="sd">        **/state/get_pose** service.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pose(Point)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#Wait until a service becomes available.</span>
+        <span class="n">rospy</span><span class="o">.</span><span class="n">wait_for_service</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">SERVER_GET_POSE</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Call the service and get a response with the current robot position.</span>
+            <span class="n">service</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">ServiceProxy</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">SERVER_GET_POSE</span><span class="p">,</span> <span class="n">GetPose</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">service</span><span class="p">()</span>
+            <span class="n">pose</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">pose</span>
+
+            <span class="k">return</span> <span class="n">pose</span>
+        <span class="c1">#In case service calling is fail</span>
+        <span class="k">except</span> <span class="n">rospy</span><span class="o">.</span><span class="n">ServiceException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log_msg</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;Server cannot get current robot position: {e}&#39;</span>
+            <span class="n">rospy</span><span class="o">.</span><span class="n">logerr</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span></div>
+  
+<div class="viewcode-block" id="Build_Ontology_Map.get_location"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.get_location">[docs]</a>    <span class="k">def</span> <span class="nf">get_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses get_pose() function defined in this script to find out current location of the robot is </span>
+<span class="sd">        corrispondent to which room. This function uses proximity threshold condition for define area</span>
+<span class="sd">        of each room.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            is_in(string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pose</span> <span class="o">=</span> <span class="n">Point</span><span class="p">()</span>
+        <span class="n">pose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="mf">5.5</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span>   
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mf">3.75</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">0.75</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;R1&quot;</span> 
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mf">3.75</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.75</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;R2&quot;</span>
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">3.75</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="mf">1.25</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;C1&quot;</span>
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">1.25</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="mf">6.25</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;C2&quot;</span>
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">6.25</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">0.75</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">5.5</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;R3&quot;</span>
+        <span class="k">elif</span> <span class="n">pose</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">6.25</span> <span class="ow">and</span> <span class="n">pose</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.75</span><span class="p">:</span>
+            <span class="n">is_in</span> <span class="o">=</span> <span class="s2">&quot;R4&quot;</span>
+        <span class="k">return</span> <span class="n">is_in</span></div>
+
+<div class="viewcode-block" id="Build_Ontology_Map.update_ontology"><a class="viewcode-back" href="../../build_ontology_map.html#scripts.build_ontology_map.Build_Ontology_Map.update_ontology">[docs]</a>    <span class="k">def</span> <span class="nf">update_ontology</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function it&#39;s mainly used in state machine in ``finite_state_machine.py``.</span>
+<span class="sd">        Briefly this function is useful to:</span>
+<span class="sd">            1. Update robot time instance</span>
+<span class="sd">            2. Update battery level</span>
+<span class="sd">            3. Update robot location</span>
+<span class="sd">            4. Update last visited time</span>
+<span class="sd">            5. Detect urgent locations</span>
+<span class="sd">            6. Define priority for target room</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            now(float32)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            target_room(string)</span>
+<span class="sd">            battery_low(bool)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#Update robot time instance</span>
+        <span class="n">prev_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">replace_dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">now</span><span class="o">.</span><span class="n">secs</span><span class="p">),</span> <span class="n">prev_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>
+        <span class="c1">#Update battery level</span>
+        <span class="n">prev_battery_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;batteryLvl&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">battery_level</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_battery_level</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">replace_dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;batteryLvl&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="n">battery_level</span><span class="p">,</span> <span class="n">prev_battery_level</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>
+        <span class="c1">#Update robot location</span>
+        <span class="n">prev_loc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">objectprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;isIn&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">loc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_location</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">replace_objectprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;isIn&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">prev_loc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>
+        <span class="c1">#Update last visited time</span>
+        <span class="n">prev_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">replace_dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="s2">&quot;Int&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">now</span><span class="o">.</span><span class="n">secs</span><span class="p">),</span> <span class="n">prev_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>
+        <span class="c1"># Detect target room</span>
+        <span class="n">visitedAt_E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_R1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;R1&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_R2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;R2&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_R3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;R3&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_R4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;R4&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_C1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;C1&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_C2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;visitedAt&quot;</span><span class="p">,</span> <span class="s2">&quot;C2&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">visitedAt_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">visitedAt_R1</span><span class="p">:</span> <span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="n">visitedAt_R2</span><span class="p">:</span> <span class="s2">&quot;R2&quot;</span><span class="p">,</span> <span class="n">visitedAt_R3</span><span class="p">:</span> <span class="s2">&quot;R3&quot;</span><span class="p">,</span> <span class="n">visitedAt_R4</span><span class="p">:</span> <span class="s2">&quot;R4&quot;</span><span class="p">,</span> <span class="n">visitedAt_C1</span><span class="p">:</span> <span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="n">visitedAt_C2</span><span class="p">:</span> <span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="n">visitedAt_E</span><span class="p">:</span> <span class="s2">&quot;E&quot;</span><span class="p">}</span>
+        <span class="n">visitedAt_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">visitedAt_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="n">room_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">visitedAt_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">target_room</span> <span class="o">=</span> <span class="n">room_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1">#Detect urgent locations</span>
+        <span class="n">urgency_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;urgencyThreshold&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_E</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_R1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;R1&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_R2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;R2&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;R2&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_R3</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;R3&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;R3&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_R4</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;R4&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;R4&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_C1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">now</span><span class="o">.</span><span class="n">secs</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">visitedAt_C2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">urgency_threshold</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">add_ind_to_class</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">manipulation</span><span class="o">.</span><span class="n">remove_ind_from_class</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sync_buffered_reasoner</span><span class="p">()</span>
+        <span class="n">urgent_rooms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">ind_b2_class</span><span class="p">(</span><span class="s2">&quot;URGENT&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Log updated information</span>
+        <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span> <span class="o">+</span> <span class="s1">&#39;Ontologycal map Updated...</span><span class="se">\x1b</span><span class="s1">[0m&#39;</span>
+        <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span> <span class="o">+</span> <span class="s1">&#39;Battery level: &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;batteryLvl&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m&#39;</span>
+        <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span> <span class="o">+</span> <span class="s1">&#39;Current location:&#39;</span> <span class="o">+</span> <span class="n">loc</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m &#39;</span>
+        <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTRED_EX</span> <span class="o">+</span> <span class="s1">&#39;Urgent locations:</span><span class="se">\x1b</span><span class="s1">[0m &#39;</span> 
+        <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">urgent_rooms</span><span class="p">)):</span>
+            <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTRED_EX</span> <span class="o">+</span> <span class="n">urgent_rooms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m &#39;</span>
+            <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        
+        <span class="c1"># Define priority for target room</span>
+        <span class="n">battery_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;batteryThreshold&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">battery_lvl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cut_dataprop_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">dataprop_b2_ind</span><span class="p">(</span><span class="s2">&quot;batteryLvl&quot;</span><span class="p">,</span> <span class="s2">&quot;Robot&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">battery_lvl</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">battery_threshold</span><span class="p">):</span>
+            <span class="n">battery_low</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTGREEN_EX</span> <span class="o">+</span> <span class="s1">&#39;Target room:&#39;</span> <span class="o">+</span> <span class="n">target_room</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m &#39;</span>
+            <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">battery_low</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">log_msg</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">RED</span> <span class="o">+</span> <span class="s1">&#39;Battery low, moving to charger</span><span class="se">\x1b</span><span class="s1">[0m&#39;</span> 
+            <span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log_msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_tag</span><span class="p">))</span>
+            <span class="n">target_room</span> <span class="o">=</span> <span class="s1">&#39;E&#39;</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">target_room</span><span class="p">,</span> <span class="n">battery_low</span><span class="p">]</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Mohammad reza Haji Hosseini.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
