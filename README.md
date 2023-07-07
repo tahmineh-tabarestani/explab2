@@ -119,7 +119,7 @@ In the scripts, the system path is specified to use the "carried" package. If yo
 Running the assignment multiple times may generate excessive logs, which can slow down your computer. To resolve this, use the following command to clear the logs:
 $ rosclean purge
 By following these steps, you can successfully use the assignment and run the necessary launch files for your application.
-##Hypothesis and environment
+## Hypothesis and environment
 
 The system revolves around the following features:
 
